@@ -1,5 +1,471 @@
-<html>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>German Grin</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f9f9f7;
+      --text: #1a1a1a;
+      --muted: #666;
+      --accent: #2a5caa;
+      --border: #ddd;
+      --card: #fff;
+      --sidebar-w: 200px;
+    }
+
+    body {
+      font-family: 'Georgia', serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      font-size: 17px;
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* ── Sidebar ── */
+    #sidebar {
+      width: var(--sidebar-w);
+      min-height: 100vh;
+      border-right: 1px solid var(--border);
+      padding: 2.5rem 1.25rem 2rem;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    #sidebar .name {
+      font-size: 1.1rem;
+      font-weight: normal;
+      letter-spacing: 0.01em;
+      margin-bottom: 0.15rem;
+    }
+
+    #sidebar .subtitle {
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-family: 'Helvetica Neue', sans-serif;
+      margin-bottom: 2rem;
+    }
+
+    nav {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      flex: 1;
+    }
+
+    nav a {
+      font-family: 'Helvetica Neue', sans-serif;
+      font-size: 0.9rem;
+      color: var(--muted);
+      text-decoration: none;
+      padding: 0.3rem 0.5rem;
+      border-radius: 4px;
+      transition: color 0.15s, background 0.15s;
+    }
+
+    nav a:hover { color: var(--text); background: #ececea; }
+
+    nav a.active {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .nav-sub {
+      display: none;
+      flex-direction: column;
+      gap: 0.1rem;
+      margin-left: 0.75rem;
+      margin-top: 0.1rem;
+    }
+
+    .nav-sub.visible { display: flex; }
+
+    .nav-sub a {
+      font-size: 0.82rem;
+      padding: 0.2rem 0.5rem;
+    }
+
+    #lang-toggle {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.3rem 0.6rem;
+      font-size: 0.78rem;
+      font-family: 'Helvetica Neue', sans-serif;
+      cursor: pointer;
+      color: var(--muted);
+      align-self: flex-start;
+      margin-top: 2rem;
+      transition: color 0.15s, background 0.15s;
+    }
+
+    #lang-toggle:hover { color: var(--accent); background: #eef2fb; }
+
+    /* ── Main content ── */
+    #content {
+      flex: 1;
+      padding: 3rem 3rem 4rem;
+      max-width: 680px;
+    }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .page h1 {
+      font-size: 1.4rem;
+      font-weight: normal;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* About */
+    .bio p { margin-bottom: 0.8rem; }
+
+    /* Contact */
+    .contact-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      font-family: 'Helvetica Neue', sans-serif;
+      font-size: 0.95rem;
+    }
+
+    .contact-list a { color: var(--accent); text-decoration: none; }
+    .contact-list a:hover { text-decoration: underline; }
+
+    .contact-list .label {
+      color: var(--muted);
+      font-size: 0.78rem;
+      display: block;
+      margin-bottom: 0.1rem;
+    }
+
+    /* Blog */
+    .empty-note {
+      color: var(--muted);
+      font-family: 'Helvetica Neue', sans-serif;
+      font-size: 0.9rem;
+    }
+
+    .empty-note a { color: var(--accent); text-decoration: none; }
+    .empty-note a:hover { text-decoration: underline; }
+
+    /* ITIC */
+    .itic-sub {
+      font-family: 'Helvetica Neue', sans-serif;
+      font-size: 0.88rem;
+      color: var(--muted);
+      margin-bottom: 1.25rem;
+    }
+
+    .itic-welcome {
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .itic-welcome p { margin-bottom: 0.7rem; }
+
+    .itic-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .itic-list li {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.9rem 1.1rem;
+      font-family: 'Helvetica Neue', sans-serif;
+      font-size: 0.92rem;
+    }
+
+    .itic-list .item-title { font-weight: 600; }
+    .itic-list .item-desc { color: var(--muted); font-size: 0.84rem; margin-top: 0.2rem; }
+
+    /* Language-sensitive elements */
+    [data-lang] { display: none; }
+    html[lang="es"] [data-lang="es"],
+    html[lang="en"] [data-lang="en"] { display: block; }
+
+    span[data-lang] { display: none; }
+    html[lang="es"] span[data-lang="es"],
+    html[lang="en"] span[data-lang="en"] { display: inline; }
+
+    /* ── Mobile ── */
+    @media (max-width: 600px) {
+      body { flex-direction: column; }
+
+      #sidebar {
+        width: 100%;
+        min-height: unset;
+        height: auto;
+        position: static;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        padding: 1.5rem 1.25rem 1rem;
+      }
+
+      #sidebar .subtitle { margin-bottom: 1rem; }
+
+      nav { flex-direction: row; flex-wrap: wrap; gap: 0.25rem; }
+
+      #lang-toggle { margin-top: 1rem; }
+
+      #content { padding: 2rem 1.25rem 3rem; }
+    }
+  </style>
+</head>
 <body>
-	<h1>FUNCIONA!!!</h1>
+
+<aside id="sidebar">
+  <div class="name">German Grin</div>
+  <div class="subtitle">
+    <span data-lang="es">Lic. en Sistemas de Información</span>
+    <span data-lang="en">B.S. in Information Systems</span>
+  </div>
+
+  <nav>
+    <a href="#about" class="nav-link active" data-page="about">
+      <span data-lang="es">Sobre mí</span>
+      <span data-lang="en">About</span>
+    </a>
+    <a href="#blog" class="nav-link" data-page="blog">Blog</a>
+    <a href="#itic" class="nav-link" data-page="itic">ITIC</a>
+    <div class="nav-sub" id="itic-subnav">
+      <a href="#itic-programa" class="nav-link" data-page="itic-programa">
+        <span data-lang="es">Programa</span>
+        <span data-lang="en">Syllabus</span>
+      </a>
+      <a href="#itic-bibliografia" class="nav-link" data-page="itic-bibliografia">
+        <span data-lang="es">Bibliografía</span>
+        <span data-lang="en">Bibliography</span>
+      </a>
+      <a href="#itic-presentaciones" class="nav-link" data-page="itic-presentaciones">
+        <span data-lang="es">Presentaciones</span>
+        <span data-lang="en">Presentations</span>
+      </a>
+      <a href="#itic-extra" class="nav-link" data-page="itic-extra">
+        <span data-lang="es">Material extra</span>
+        <span data-lang="en">Extra material</span>
+      </a>
+    </div>
+    <a href="#contact" class="nav-link" data-page="contact">
+      <span data-lang="es">Contacto</span>
+      <span data-lang="en">Contact</span>
+    </a>
+  </nav>
+
+  <button id="lang-toggle" onclick="toggleLang()">English</button>
+</aside>
+
+<main id="content">
+
+  <!-- About -->
+  <section class="page active" id="page-about">
+    <h1>
+      <span data-lang="es">Sobre mí</span>
+      <span data-lang="en">About</span>
+    </h1>
+    <div class="bio">
+      <div data-lang="es">
+        <p>
+          Trabajo en el cruce entre ingeniería de software y producto, con foco en
+          sistemas distribuidos, infraestructura y equipos técnicos.
+        </p>
+        <p>
+          También soy docente en la <strong>Universidad de Buenos Aires</strong>,
+          donde dicto la materia Introducción a las Tecnologías de Información y las
+          Comunicaciones (ITIC).
+        </p>
+      </div>
+      <div data-lang="en">
+        <p>
+          I work at the intersection of software engineering and product, with a
+          focus on distributed systems, infrastructure, and technical teams.
+        </p>
+        <p>
+          I also teach at the <strong>University of Buenos Aires</strong>, where I
+          lead the course Introduction to Information and Communication Technologies
+          (ITIC).
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Blog -->
+  <section class="page" id="page-blog">
+    <h1>Blog</h1>
+    <p class="empty-note">
+      <span data-lang="es">Próximamente.</span>
+      <span data-lang="en">Coming soon.</span>
+    </p>
+  </section>
+
+  <!-- ITIC -->
+  <section class="page" id="page-itic">
+    <h1>ITIC</h1>
+    <p class="itic-sub">
+      <span data-lang="es">
+        Introducción a las Tecnologías de Información y las Comunicaciones &mdash;
+        UBA, Facultad de Ciencias Económicas.
+      </span>
+      <span data-lang="en">
+        Introduction to Information and Communication Technologies &mdash;
+        UBA, School of Economic Sciences.
+      </span>
+    </p>
+
+    <div class="itic-welcome">
+      <div data-lang="es">
+        <p>
+          Bienvenidos al sitio de <strong>ITIC &mdash; Sede Avellaneda, Cátedra Oriolo</strong>.
+        </p>
+        <p>
+          Aquí encontrarán el material de la cursada: programa, bibliografía, presentaciones
+          de clase y recursos adicionales. El contenido se irá actualizando a lo largo del cuatrimestre.
+        </p>
+      </div>
+      <div data-lang="en">
+        <p>
+          Welcome to the <strong>ITIC &mdash; Avellaneda Campus, Oriolo Chair</strong> site.
+        </p>
+        <p>
+          Here you will find all course materials: syllabus, bibliography, class slides,
+          and additional resources. Content will be updated throughout the semester.
+        </p>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ITIC: Programa -->
+  <section class="page" id="page-itic-programa">
+    <h1>
+      <span data-lang="es">Programa</span>
+      <span data-lang="en">Syllabus</span>
+    </h1>
+    <p class="empty-note">
+      <a href="resources/Plan 2019.pdf" target="_blank" rel="noopener">
+        <span data-lang="es">Plan 2019 (PDF)</span>
+        <span data-lang="en">Plan 2019 (PDF)</span>
+      </a>
+    </p>
+  </section>
+
+  <!-- ITIC: Bibliografía -->
+  <section class="page" id="page-itic-bibliografia">
+    <h1>
+      <span data-lang="es">Bibliografía</span>
+      <span data-lang="en">Bibliography</span>
+    </h1>
+    <p class="empty-note">
+      <span data-lang="es">Próximamente.</span>
+      <span data-lang="en">Coming soon.</span>
+    </p>
+  </section>
+
+  <!-- ITIC: Presentaciones -->
+  <section class="page" id="page-itic-presentaciones">
+    <h1>
+      <span data-lang="es">Presentaciones</span>
+      <span data-lang="en">Presentations</span>
+    </h1>
+    <p class="empty-note">
+      <span data-lang="es">Próximamente.</span>
+      <span data-lang="en">Coming soon.</span>
+    </p>
+  </section>
+
+  <!-- ITIC: Material extra -->
+  <section class="page" id="page-itic-extra">
+    <h1>
+      <span data-lang="es">Material extra</span>
+      <span data-lang="en">Extra material</span>
+    </h1>
+    <p class="empty-note">
+      <span data-lang="es">Próximamente.</span>
+      <span data-lang="en">Coming soon.</span>
+    </p>
+  </section>
+
+  <!-- Contact -->
+  <section class="page" id="page-contact">
+    <h1>
+      <span data-lang="es">Contacto</span>
+      <span data-lang="en">Contact</span>
+    </h1>
+    <ul class="contact-list">
+      <li>
+        <span class="label">Email</span>
+        <a href="mailto:ggrin@celaralabs.com">ggrin@celaralabs.com</a>
+      </li>
+      <li>
+        <span class="label">GitHub</span>
+        <a href="https://github.com/nethergrin" target="_blank" rel="noopener">github.com/nethergrin</a>
+      </li>
+      <li>
+        <span class="label">LinkedIn</span>
+        <a href="https://linkedin.com/in/germangrin" target="_blank" rel="noopener">linkedin.com/in/germangrin</a>
+      </li>
+    </ul>
+  </section>
+
+</main>
+
+<script>
+  const iticPages = ['itic', 'itic-programa', 'itic-bibliografia', 'itic-presentaciones', 'itic-extra'];
+
+  function navigate(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-link').forEach(a => a.classList.remove('active'));
+
+    document.getElementById('page-' + pageId).classList.add('active');
+    document.querySelector('[data-page="' + pageId + '"]').classList.add('active');
+
+    const isItic = iticPages.includes(pageId);
+    document.getElementById('itic-subnav').classList.toggle('visible', isItic);
+    if (isItic) document.querySelector('[data-page="itic"]').classList.add('active');
+
+    history.replaceState(null, '', '#' + pageId);
+  }
+
+  document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      navigate(link.dataset.page);
+    });
+  });
+
+  const hash = location.hash.replace('#', '');
+  if (hash && document.getElementById('page-' + hash)) navigate(hash);
+
+  function toggleLang() {
+    const html = document.documentElement;
+    const btn = document.getElementById('lang-toggle');
+    if (html.lang === 'es') {
+      html.lang = 'en';
+      btn.textContent = 'Español';
+    } else {
+      html.lang = 'es';
+      btn.textContent = 'English';
+    }
+  }
+</script>
+
 </body>
 </html>
